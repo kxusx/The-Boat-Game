@@ -1,0 +1,11 @@
+Model Information:
+* title:	Coin
+* source:	https://sketchfab.com/3d-models/coin-d41feb2c10ed4c06ad4b8134ccaba516
+* author:	rukitu (https://sketchfab.com/rukitu)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Coin" (https://sketchfab.com/3d-models/coin-d41feb2c10ed4c06ad4b8134ccaba516) by rukitu (https://sketchfab.com/rukitu) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
