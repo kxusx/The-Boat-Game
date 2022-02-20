@@ -1,7 +1,7 @@
 import './style.css'
 
 import * as THREE from 'three';
-
+ 
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
@@ -13,6 +13,10 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 let container, stats; // dont need
 let camera, scene, renderer;
 let controls, water, sun, mesh;
+
+function random(min, max) {
+  return Math.random() * (max - min) + min;
+}
 
 const loader = new GLTFLoader();
 // loader.load("models/player/scene.gltf",function(gltf){
@@ -55,23 +59,45 @@ class Boat {
 const boat = new Boat()
 
 //----------------------------------------------------------------------------------
-
 class Trash{
-    constructor(){
-      loader.load("models/coin/scene.gltf",(gltf)=>{
-        scene.add( gltf.scene )
-        gltf.scene.scale.set(10,10,10) // scale here
-        gltf.scene.position.set(0,1,0);
-      })
-    }
+  constructor(_scene){
+    scene.add( _scene )
+    _scene.scale.set(10, 10, 10)
+    // _scene.position.set(0,1,0);
+    // if(Math.random() > .6){
+       _scene.position.set(random(-500, 500), 1, random(-500, 500))
+    // }else{
+    //   _scene.position.set(random(-500, 500), -.5, random(-1000, 1000))
+    // }
+
+    this.trash = _scene
+  }
 }
-let trash = new Trash()
+async function loadModel(url){
+  return new Promise((resolve, reject) => {
+    loader.load(url, (gltf) => {
+      resolve(gltf.scene)
+    })
+  })
+}
+
+let boatModel = null
+
+async function createTrash(){
+  if(!boatModel){
+    boatModel = await loadModel("models/coin/scene.gltf")
+  }
+  return new Trash(boatModel.clone())
+}
+
+let trashes = []
+const TRASH_COUNT = 100
 
 
 init();
 animate();
 
-function init() {
+async function init() {
 
   // container = document.getElementById('container'); // dont need
 
@@ -173,27 +199,12 @@ function init() {
   controls.maxDistance = 200.0;
   controls.update();
 
-  //
-  // dont need
-  // stats = new Stats();
-  // container.appendChild(stats.dom);
-
-  // GUI
-  // dont need
-  // const gui = new GUI();
-  // const folderSky = gui.addFolder('Sky');
-  // folderSky.add(parameters, 'elevation', 0, 90, 0.1).onChange(updateSun);
-  // folderSky.add(parameters, 'azimuth', - 180, 180, 0.1).onChange(updateSun);
-  // folderSky.open();
-
   const waterUniforms = water.material.uniforms;
 
-  // const folderWater = gui.addFolder('Water');
-  // folderWater.add(waterUniforms.distortionScale, 'value', 0, 8, 0.1).name('distortionScale');
-  // folderWater.add(waterUniforms.size, 'value', 0.1, 10, 0.1).name('size');
-  // folderWater.open();
-
-  //
+  for(let i = 0 ; i < TRASH_COUNT ; i++){
+    const trash = await createTrash()
+    trashes.push(trash)
+  }
 
   window.addEventListener('resize', onWindowResize);
 
@@ -216,6 +227,8 @@ function init() {
     boat.stop()
   })
 
+
+
 }
 
 function onWindowResize() {
@@ -227,24 +240,43 @@ function onWindowResize() {
 
 }
 
+function isColliding(obj1, obj2){
+  return (
+    Math.abs(obj1.position.x - obj2.position.x) < 15 &&
+    Math.abs(obj1.position.z - obj2.position.z) < 10
+  )
+}
+
+function checkCollisions(){
+  if(boat.boat){
+    trashes.forEach(trash => {
+      console.log("hello")
+      if(trash.trash){
+        if(isColliding(boat.boat, trash.trash)){
+          scene.remove(trash.trash)
+        }
+      }
+    })
+  }
+}
+
 function animate() {
 
   requestAnimationFrame(animate);
   render();
   boat.update();
-  // dont need
-  // stats.update();
+  checkCollisions();
+  // if(boat.boat && trash.trash){
+  //   // if(isColliding(boat.boat, trash.trash)){
+  //   //   // trash.trash.position.y = -1000
+  //   //   console.log("collision")
+  //   // }
+  // }
+
 
 }
 
 function render() {
-
-  // const time = performance.now() * 0.001;
-
-  // dont need
-  // mesh.position.y = Math.sin(time) * 20 + 5;
-  // mesh.rotation.x = time * 0.5;
-  // mesh.rotation.z = time * 0.51;
 
   water.material.uniforms['time'].value += 1.0 / 60.0;
 
