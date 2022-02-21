@@ -9,10 +9,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { PlaneGeometry, ShortType, Vector3 } from 'three';
 
 let container, stats; // dont need
 let camera, scene, renderer;
 let controls, water, sun, mesh;
+const pi = 3.14159265;
 
 function random(min, max) {
   return Math.random() * (max - min) + min;
@@ -20,13 +22,31 @@ function random(min, max) {
 
 const loader = new GLTFLoader();
 
+async function loadModel(url) {
+  return new Promise((resolve, reject) => {
+    loader.load(url, (gltf) => {
+      resolve(gltf.scene)
+    })
+  })
+}
+
 class Boat {
   constructor() {
+    // let p1 = null
+    // p1 = loadModel("models/player/scene.gltf")
+    // this.model=p1
+    // let p1 =  loadModel('models/player/scene.gltf').then((result) => {this.model = result.scene});
     loader.load("models/player/scene.gltf", (gltf) => {
       scene.add(gltf.scene)
       gltf.scene.scale.set(0.005, 0.005, 0.005) // scale here
       gltf.scene.position.set(0, 0, 0);
       gltf.scene.rotation.y = 1.75
+      console.log("E");
+      this.position = {
+        x: gltf.scene.position.x,
+        y: gltf.scene.position.y,
+        z: gltf.scene.position.z
+      }
 
       this.boat = gltf.scene
       this.speed = {
@@ -34,16 +54,14 @@ class Boat {
         rot: 0
       }
     })
-    // console.log(this.speed)
+    this.bullet = {
+      geom: new THREE.CylinderGeometry(1, 0.1, 2, 32),
+      mat: new THREE.MeshBasicMaterial({ color: 0xDC143C }),
+      cooldown: 500,
+      lastShot: 0
+    };
     this.lasers = new Array();
-
-      this.bullet = {
-        geom: new THREE.CylinderGeometry(0.1, 0.1, 2, 32),
-        mat: new THREE.MeshBasicMaterial({ color: 0xDC143C }),
-        vel: -1,
-        cooldown: 500,
-        lastShot: 0
-      };
+    this.vels = new Array();
   }
 
   stop() {
@@ -55,21 +73,47 @@ class Boat {
     if (this.boat) {
       this.boat.rotation.y += this.speed.rot
       this.boat.translateZ(this.speed.vel)
+      console.log("y"+this.boat.position.y)
+      console.log("rot"+this.boat.rotation.y)
+      console.log("z"+this.boat.position.z)
+      console.log("x"+this.boat.position.x)
+      let prev = new Vector3(0, -1, 0);
+      prev.applyAxisAngle(new Vector3(0, 1, 0), this.boat.rotation.y);
+      
+      this.position.x = this.boat.position.x
+      this.position.y = this.boat.position.y
+      this.position.z = this.boat.position.z
+    }
+
+    let toDel = new Array();
+    for (let i = 0; i < this.lasers.length; i++) {
+      this.lasers[i].position.set(this.lasers[i].position.x+this.vels[i][0], this.lasers[i].position.y+this.vels[i][1], this.lasers[i].position.z+this.vels[i][2]);
+      if (this.lasers[i].position.z < -60) {
+        scene.remove(this.lasers[i]);
+        toDel.push(i);
+      }
+    }
+    for(var i=0; i<toDel.length; i++){
+        this.lasers.splice(toDel[i], 1);
+        this.vels.splice(toDel[i], 1);
     }
   }
 
   shoot() {
     console.log("shoot")
-    if(new Date().getTime() - this.bullet.lastShot < this.bullet.cooldown)
-        return;
+    if (new Date().getTime() - this.bullet.lastShot < this.bullet.cooldown)
+      return;
     this.bullet.lastShot = new Date().getTime();
     var shot = new THREE.Mesh(this.bullet.geom, this.bullet.mat);
-    shot.position.set(this.position.x+3.1, this.position.y+2.1, this.position.z-2);
-    shot.rotation.x = -pi/2;
+    shot.position.set(this.boat.position.x , this.boat.position.y + 4, this.boat.position.z+5);
+    console.log(this.boat.rotation.y)
+    shot.rotation.x = -pi/2
+    shot.rotation.z = this.boat.rotation.y
+
     this.lasers.push(shot);
+    this.vels.push([ Math.sin(this.boat.rotation.y), 0, Math.cos(this.boat.rotation.y)])
     scene.add(shot);
-    
-}
+  }
 }
 
 const boat = new Boat()
@@ -89,13 +133,7 @@ class Trash {
     this.trash = _scene
   }
 }
-async function loadModel(url) {
-  return new Promise((resolve, reject) => {
-    loader.load(url, (gltf) => {
-      resolve(gltf.scene)
-    })
-  })
-}
+
 
 let boatModel = null
 
@@ -227,7 +265,7 @@ async function init() {
     if (e.key == "a") {
       boat.speed.rot = 0.05
     }
-    if(e.key=="y"){
+    if (e.key == " ") {
       boat.shoot()
     }
   })
@@ -274,12 +312,7 @@ function animate() {
   render();
   boat.update();
   checkCollisions();
-  // if(boat.boat && trash.trash){
-  //   // if(isColliding(boat.boat, trash.trash)){
-  //   //   // trash.trash.position.y = -1000
-  //   //   console.log("collision")
-  //   // }
-  // }
+
 
 
 }
