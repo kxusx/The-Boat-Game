@@ -38,7 +38,11 @@ class Boat {
       gltf.scene.position.set(0, 0, 0);
       gltf.scene.rotation.y = 1.75
       console.log("E");
-      
+      this.position = {
+        x: gltf.scene.position.x,
+        y: gltf.scene.position.y,
+        z: gltf.scene.position.z
+      }
 
       this.boat = gltf.scene
       this.speed = {
@@ -54,7 +58,6 @@ class Boat {
     };
     this.lasers = new Array();
     this.vels = new Array();
-    this.times = new Array();
   }
 
   stop() {
@@ -69,15 +72,15 @@ class Boat {
       let prev = new Vector3(0, -1, 0);
       prev.applyAxisAngle(new Vector3(0, 1, 0), this.boat.rotation.y);
       
-      // this.position.x = this.boat.position.x
-      // this.position.y = this.boat.position.y
-      // this.position.z = this.boat.position.z
+      this.position.x = this.boat.position.x
+      this.position.y = this.boat.position.y
+      this.position.z = this.boat.position.z
     }
 
     let toDel = new Array();
     for (let i = 0; i < this.lasers.length; i++) {
       this.lasers[i].position.set(this.lasers[i].position.x+this.vels[i][0], this.lasers[i].position.y+this.vels[i][1], this.lasers[i].position.z+this.vels[i][2]);
-      if (new Date().getTime() - this.times[i] > 5000) {
+      if (this.lasers[i].position.z < -60) {
         scene.remove(this.lasers[i]);
         toDel.push(i);
       }
@@ -85,7 +88,6 @@ class Boat {
     for(var i=0; i<toDel.length; i++){
         this.lasers.splice(toDel[i], 1);
         this.vels.splice(toDel[i], 1);
-        this.times.splice(toDel[i], 1);
     }
   }
 
@@ -102,7 +104,6 @@ class Boat {
 
     this.lasers.push(shot);
     this.vels.push([ Math.sin(this.boat.rotation.y), 0, Math.cos(this.boat.rotation.y)])
-    this.times.push(new Date().getTime())
     scene.add(shot);
   }
 }
@@ -160,9 +161,6 @@ class Enemy {
     };
     this.lasers = new Array();
     this.vels = new Array();
-    this.times = new Array();
-    this.xs = new Array();
-    this.zs =  new Array();
   }
 
   stop() {
@@ -192,45 +190,8 @@ class Enemy {
       const arccosine = Math.acos(cosine);
       this.enemy.rotation.y = arccosine;
 
-      let toDel = new Array();
-      for (let i = 0; i < this.lasers.length; i++) {
-        // this.lasers[i].position.set(this.lasers[i].position.x+this.vels[i][0], this.lasers[i].position.y+this.vels[i][1], this.lasers[i].position.z+this.vels[i][2]);
-        this.lasers[i].position.set(this.lasers[i].position.x+this.xs[i]*0.025, this.lasers[i].position.y+0, this.lasers[i].position.z+this.zs[i]*0.025);
-        if (new Date().getTime() - this.times[i] > 5000) {
-          scene.remove(this.lasers[i]);
-          toDel.push(i);
-        }
-      }
-      console.log(toDel.length)
-      for(var i=0; i<toDel.length; i++){
-          this.lasers.splice(toDel[i], 1);
-          this.vels.splice(toDel[i], 1);
-          this.times.splice(toDel[i], 1);
-          this.xs.splice(toDel[i], 1);
-          this.zs.splice(toDel[i], 1);
-      }
-
       // console.log(enem)
     }
-  }
-  shoot() {
-    // console.log(new Date().getTime())
-    if (new Date().getTime() - this.bullet.lastShot < this.bullet.cooldown)
-      return;
-    this.bullet.lastShot = new Date().getTime();
-    var shot = new THREE.Mesh(this.bullet.geom, this.bullet.mat);
-    shot.position.set(this.enemy.position.x , this.enemy.position.y + 4, this.enemy.position.z+5);
-    console.log("enemy shooted")
-    shot.rotation.x = -pi/2
-    shot.rotation.z = this.enemy.rotation.y
-
-    this.lasers.push(shot);
-    this.vels.push([ Math.sin(this.enemy.rotation.y), 0, Math.cos(this.enemy.rotation.y)])
-    this.times.push(new Date().getTime())
-    this.xs.push( boat.boat.position.x - this.enemy.position.x)
-    this.zs.push( boat.boat.position.z - this.enemy.position.z)
-
-    scene.add(shot);
   }
 }
 
@@ -386,7 +347,6 @@ function checkCollisions() {
   if (boat.boat) {
     trashes.forEach(trash => {
       if (trash.trash) {
-      console.log("e")
         if (isColliding(boat.boat, trash.trash)) {
           scene.remove(trash.trash)
         }
@@ -400,7 +360,6 @@ function animate() {
   requestAnimationFrame(animate);
   render();
   boat.update();
-  enemy.shoot();
   enemy.update();
   checkCollisions();
 
