@@ -37,7 +37,7 @@ class Boat {
       gltf.scene.scale.set(0.005, 0.005, 0.005) // scale here
       gltf.scene.position.set(0, 0, 0);
       gltf.scene.rotation.y = 1.75
-      console.log("E");
+      
 
 
       this.boat = gltf.scene
@@ -201,7 +201,6 @@ class Enemy {
           toDel.push(i);
         }
       }
-      console.log(toDel.length)
       for (var i = 0; i < toDel.length; i++) {
         this.lasers.splice(toDel[i], 1);
         this.vels.splice(toDel[i], 1);
@@ -220,7 +219,6 @@ class Enemy {
       this.bullet.lastShot = new Date().getTime();
       var shot = new THREE.Mesh(this.bullet.geom, this.bullet.mat);
       shot.position.set(this.enemy.position.x, this.enemy.position.y + 4, this.enemy.position.z + 5);
-      console.log("enemy shooted")
       shot.rotation.x = -pi / 2
       shot.rotation.z = this.enemy.rotation.y
 
@@ -251,7 +249,7 @@ async function createEnemy() {
 }
 
 let enemys = []
-const ENEMY_COUNT = 2
+const ENEMY_COUNT = 1
 
 init();
 animate();
@@ -408,7 +406,7 @@ function checkTrashCollisions() {
   if (boat.boat) {
     trashes.forEach(trash => {
       if (trash.trash) {
-        console.log("e")
+        
         if (isTrashColliding(boat.boat, trash.trash)) {
           scene.remove(trash.trash)
         }
@@ -421,6 +419,13 @@ function isEnemyColliding(obj1, obj2) {
   return (
     Math.abs(obj1.position.x - obj2.position.x) < 20 &&
     Math.abs(obj1.position.z - obj2.position.z) < 20
+  )
+}
+
+function isPlayerBulletColliding(obj1, obj2) {
+  return (
+    Math.abs(obj1.position.x - obj2.position.x) < 10 &&
+    Math.abs(obj1.position.z - obj2.position.z) < 10
   )
 }
 
@@ -443,13 +448,9 @@ function checkPlayerBulletCollisions() {
     enemys.forEach(enemy => {
       if (enemy.enemy) {
         enemy.lasers.forEach(laser => {
-          if (laser.laser) {
-            if (isTrashColliding(laser.laser, boat.boat)) {
-              scene.remove(laser.laser)
-              boat.removePlayerBullet()
-              enemys[enemys.indexOf(enemy)].removeEnemyBullet()
-              enemys.splice(enemys.indexOf(enemy), 1)
-            }
+          // console.log(laser)
+          if(isPlayerBulletColliding(laser,boat.boat)){
+            console.log("playerhit")
           }
         })
       }
@@ -469,7 +470,7 @@ function animate() {
   }
   checkTrashCollisions();
   checkEnemyCollisions();
-
+  checkPlayerBulletCollisions();
 
 
 
