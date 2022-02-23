@@ -282,10 +282,11 @@ function generateEnemies() {
     enemys.push(enemy)
   }}
 }
-
+let initialTime =0
 async function createEnemy() {
   if (!enemyModel) {
     enemyModel = await loadModel("models/enemy/scene.gltf")
+    initialTime= new Date().getTime()
   }
   return new Enemy(enemyModel.clone())
 }
@@ -295,7 +296,7 @@ init();
 animate();
 
 async function init() {
-
+//  
   // container = document.getElementById('container'); // dont need
 
   //
@@ -552,9 +553,11 @@ function changeCameraAngle() {
 function HUD(){
   document.getElementById("score").innerHTML = Math.round(boat.score);
   document.getElementById("health").innerHTML= Math.round(boat.health);
+  let currTime = new Date().getTime()
   
+   document.getElementById("timeDone").innerHTML= Math.round((currTime-initialTime)/1000)
 }
-let initTime = Date().getTime()
+
 function animate() {
   requestAnimationFrame(animate);
   render();
