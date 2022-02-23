@@ -15,7 +15,8 @@ let container, stats; // dont need
 let camera, scene, renderer;
 let controls, water, sun, mesh;
 const pi = 3.14159265;
-let bounds = [1000,-1000,1000,-1000]
+let BSIZE = 500
+let bounds = [BSIZE, -BSIZE, BSIZE, -BSIZE]
 
 function random(min, max) {
   return Math.random() * (max - min) + min;
@@ -55,6 +56,7 @@ class Boat {
     this.vels = new Array();
     this.times = new Array();
     this.health = 10000;
+    this.score = 0;
   }
 
   stop() {
@@ -69,47 +71,48 @@ class Boat {
       let prev = new Vector3(0, -1, 0);
       prev.applyAxisAngle(new Vector3(0, 1, 0), this.boat.rotation.y);
 
-      // this.position.x = this.boat.position.x
-      // this.position.y = this.boat.position.y
-      // this.position.z = this.boat.position.z
-    }
 
-    let toDel = new Array();
-    for (let i = 0; i < this.lasers.length; i++) {
-      this.lasers[i].position.set(this.lasers[i].position.x + this.vels[i][0]*2, this.lasers[i].position.y + this.vels[i][1]*2, this.lasers[i].position.z + this.vels[i][2]*2);
-      if (new Date().getTime() - this.times[i] > 5000) {
-        scene.remove(this.lasers[i]);
-        toDel.push(i);
+      let toDel = new Array();
+      for (let i = 0; i < this.lasers.length; i++) {
+        this.lasers[i].position.set(this.lasers[i].position.x + this.vels[i][0] * 4, this.lasers[i].position.y + this.vels[i][1] * 2, this.lasers[i].position.z + this.vels[i][2] * 4);
+        if (new Date().getTime() - this.times[i] > 5000) {
+          scene.remove(this.lasers[i]);
+          toDel.push(i);
+        }
+      }
+      for (var i = 0; i < toDel.length; i++) {
+        this.lasers.splice(toDel[i], 1);
+        this.vels.splice(toDel[i], 1);
+        this.times.splice(toDel[i], 1);
+      }
+
+      if (this.boat.position.x >= bounds[2] ||
+        this.boat.position.x <= bounds[3] ||
+        this.boat.position.z >= bounds[0] ||
+        this.boat.position.z <= bounds[1]) {
+        bounds[0] = this.boat.position.z + BSIZE
+        bounds[1] = this.boat.position.z - BSIZE
+        bounds[2] = this.boat.position.x + BSIZE
+        bounds[3] = this.boat.position.x - BSIZE
+        console.log(boat.boat.position)
+        generateEnemies()
+        generateTrash()
+      }
+
+      if (enemys.length == 0) {
+        generateEnemies()
       }
     }
-    for (var i = 0; i < toDel.length; i++) {
-      this.lasers.splice(toDel[i], 1);
-      this.vels.splice(toDel[i], 1);
-      this.times.splice(toDel[i], 1);
-    }
-
-    if(this.boat.position.x>=bounds[2] || 
-      this.boat.position.x <= bounds[3]||
-      this.boat.position.z>= bounds[0]||
-      this.boat.position.z <= bounds[1]){
-       bounds[0] = this.boat.position.z + 500
-       bounds[1] = this.boat.position.z - 500
-       bounds[2] = this.boat.position.x + 500
-       bounds[3] = this.boat.position.x - 500
-
-    }
-
-    
   }
 
   shoot() {
-    // console.log("shoot")
+
     if (new Date().getTime() - this.bullet.lastShot < this.bullet.cooldown)
       return;
     this.bullet.lastShot = new Date().getTime();
     var shot = new THREE.Mesh(this.bullet.geom, this.bullet.mat);
     shot.position.set(this.boat.position.x, this.boat.position.y + 4, this.boat.position.z + 5);
-    // console.log(this.boat.rotation.y)
+
     shot.rotation.x = -pi / 2
     shot.rotation.z = this.boat.rotation.y
 
@@ -128,7 +131,11 @@ class Trash {
     _scene.scale.set(10, 10, 10)
     // _scene.position.set(0,1,0);
     // if(Math.random() > .6){
-    _scene.position.set(random(-500, 500), 1, random(-500, 500))
+    let x = random(bounds[3], bounds[2])
+    let y = 1
+    let z = random(bounds[1], bounds[0])
+    _scene.position.set(x, 1, z);
+    // _scene.position.set(random(-500, 500), 1, random(-500, 500))
     // }else{
     //   _scene.position.set(random(-500, 500), -.5, random(-1000, 1000))
     // }
@@ -138,14 +145,24 @@ class Trash {
 }
 
 let boatModel = null
+let trashes = []
+const TRASH_COUNT = 100
+
+function generateTrash(){
+  for(let i = 0; i < TRASH_COUNT; i++){
+    let trash = new Trash(boatModel.clone())
+    trashes.push(trash)
+  }
+}
+
+
 async function createTrash() {
   if (!boatModel) {
     boatModel = await loadModel("models/coin/scene.gltf")
   }
   return new Trash(boatModel.clone())
 }
-let trashes = []
-const TRASH_COUNT = 100
+
 // ----------------------------------------------------------------------------------
 
 class Enemy {
@@ -153,9 +170,13 @@ class Enemy {
 
     scene.add(_scene);
     _scene.scale.set(0.75, 0.75, 0.75); // scale here
-    _scene.position.set(random(-500, 500), 1, random(-500, 500));
+    let x = random(bounds[3], bounds[2])
+    let y = 1
+    let z = random(bounds[1], bounds[0])
+    _scene.position.set(x, 1, z);
+    // _scene.position.set(random(-300, 300), 1, random(-300, 300));
     // gltf.scene.rotation.y = 1.5;
-    // console.log(gltf.size)
+
     this.enemy = _scene;
 
     this.speed = {
@@ -165,7 +186,7 @@ class Enemy {
 
     this.bullet = {
       geom: new THREE.CylinderGeometry(1, 0.1, 2, 32),
-      mat: new THREE.MeshBasicMaterial({ color: 0x0000FF }),
+      mat: new THREE.MeshBasicMaterial({ color: 0xFFC0CB }),
       cooldown: 2500,
       lastShot: 0
     };
@@ -189,7 +210,7 @@ class Enemy {
         boat.boat.position.z - this.enemy.position.z
       );
 
-      // console.log(diff)
+
       diff.multiplyScalar(this.speed.vel);
       // this.front.copy(diff);
       // this.front.normalize();
@@ -197,7 +218,7 @@ class Enemy {
       // this.enemy.rotation.y = (angle);
       const enem = this.enemy.localToWorld(new THREE.Vector3(0.0, 0.0, 1.0));
       enem.normalize();
-      // console.log(enem)
+
       diff.normalize();
       const cosine = diff.dot(enem);
       const arccosine = Math.acos(cosine);
@@ -220,7 +241,7 @@ class Enemy {
         this.zs.splice(toDel[i], 1);
       }
 
-      // console.log(enem)
+
     }
   }
   shoot() {
@@ -242,7 +263,6 @@ class Enemy {
       scene.add(shot);
     }
   }
-
   removeEnemyBullets() {
     for (var i = 0; i < this.lasers.length; i++) {
       scene.remove(this.lasers[i]);
@@ -251,14 +271,24 @@ class Enemy {
 }
 
 let enemyModel = null
+let enemys = []
+const ENEMY_COUNT = 4
+
+function generateEnemies() {
+  for (let i = 0; i < ENEMY_COUNT; i++) {
+    const enemy = new Enemy(enemyModel.clone())
+    console.log(enemy)
+    enemys.push(enemy)
+  }
+}
+
 async function createEnemy() {
   if (!enemyModel) {
     enemyModel = await loadModel("models/enemy/scene.gltf")
   }
   return new Enemy(enemyModel.clone())
 }
-let enemys = []
-const ENEMY_COUNT = 4
+
 
 init();
 animate();
@@ -362,15 +392,18 @@ async function init() {
     trashes.push(trash)
   }
 
+  //  generateEnemies()
   for (let i = 0; i < ENEMY_COUNT; i++) {
     const enemy = await createEnemy()
+    console.log(enemy)
     enemys.push(enemy)
   }
+
 
   window.addEventListener('resize', onWindowResize);
 
   window.addEventListener('keydown', function (e) {
-    console.log(e.key)
+
     if (e.key == "w") {
       boat.speed.vel = 1
     }
@@ -418,7 +451,7 @@ function checkTrashCollisions() {
   if (boat.boat) {
     trashes.forEach(trash => {
       if (trash.trash) {
-        
+
         if (isTrashColliding(boat.boat, trash.trash)) {
           scene.remove(trash.trash)
         }
@@ -461,8 +494,8 @@ function checkPlayerBulletCollisions() {
     enemys.forEach(enemy => {
       if (enemy.enemy) {
         enemy.lasers.forEach(laser => {
-          // console.log(laser)
-          if(isPlayerBulletColliding(laser,boat.boat)){
+
+          if (isPlayerBulletColliding(laser, boat.boat)) {
             boat.health -= 1
             scene.remove(laser)
           }
@@ -472,18 +505,42 @@ function checkPlayerBulletCollisions() {
   }
 }
 
-function changeCameraAngle(){
+function isEnemyBulletColliding(obj1, obj2) {
+  return (
+    Math.abs(obj1.position.x - obj2.position.x) < 10 &&
+    Math.abs(obj1.position.z - obj2.position.z) < 10
+  )
+}
+
+function checkEnemyBulletCollisions() {
+  if (boat.boat) {
+    boat.lasers.forEach(laser => {
+      enemys.forEach(enemy => {
+        if (enemy.enemy) {
+          if (isEnemyBulletColliding(laser, enemy.enemy)) {
+            scene.remove(laser)
+            scene.remove(enemy.enemy)
+            enemys[enemys.indexOf(enemy)].removeEnemyBullets()
+            enemys.splice(enemys.indexOf(enemy), 1)
+            boat.score += 100
+          }
+        }
+      })
+    })
+  }
+}
+function changeCameraAngle() {
   if (boat.boat) {
     if (boat.view == "third") {
-       camera.position.set(
+      camera.position.set(
         boat.boat.position.x - 50,
         boat.boat.position.y + 20,
         boat.boat.position.z
       );
     } else if (boat.view == "top") {
       camera.position.set(
-        boat.boat.position.x, 
-        boat.boat.position.y + 300, 
+        boat.boat.position.x,
+        boat.boat.position.y + 800,
         boat.boat.position.z);
     }
     camera.lookAt(boat.boat.position);
@@ -502,6 +559,7 @@ function animate() {
   checkEnemyCollisions();
   checkPlayerBulletCollisions();
   changeCameraAngle();
+  checkEnemyBulletCollisions();
 }
 
 function render() {
