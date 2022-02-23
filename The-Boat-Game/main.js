@@ -57,6 +57,7 @@ class Boat {
     this.times = new Array();
     this.health = 10000;
     this.score = 0;
+    this.treasure=0;
   }
 
   stop() {
@@ -451,6 +452,7 @@ function checkTrashCollisions() {
         if (isTrashColliding(boat.boat, trash.trash)) {
           scene.remove(trash.trash)
           boat.score+=1
+          boat.treasure+=1
         }
       }
     })
@@ -546,6 +548,7 @@ function changeCameraAngle() {
 
 function HUD(){
   document.getElementById("score").innerHTML = Math.round(boat.score);
+  document.getElementById("treasure").innerHTML= Math.round(boat.treasure);
   document.getElementById("health").innerHTML= Math.round(boat.health);
   let currTime = new Date().getTime()
   
