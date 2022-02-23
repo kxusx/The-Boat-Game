@@ -275,11 +275,12 @@ let enemys = []
 const ENEMY_COUNT = 4
 
 function generateEnemies() {
+  if(enemyModel){
   for (let i = 0; i < ENEMY_COUNT; i++) {
     const enemy = new Enemy(enemyModel.clone())
     console.log(enemy)
     enemys.push(enemy)
-  }
+  }}
 }
 
 async function createEnemy() {
@@ -454,6 +455,7 @@ function checkTrashCollisions() {
 
         if (isTrashColliding(boat.boat, trash.trash)) {
           scene.remove(trash.trash)
+          boat.score+=1
         }
       }
     })
@@ -522,7 +524,7 @@ function checkEnemyBulletCollisions() {
             scene.remove(enemy.enemy)
             enemys[enemys.indexOf(enemy)].removeEnemyBullets()
             enemys.splice(enemys.indexOf(enemy), 1)
-            boat.score += 100
+            boat.score += 1000
           }
         }
       })
@@ -547,6 +549,12 @@ function changeCameraAngle() {
   }
 }
 
+function HUD(){
+  document.getElementById("score").innerHTML = Math.round(boat.score);
+  document.getElementById("health").innerHTML= Math.round(boat.health);
+  
+}
+let initTime = Date().getTime()
 function animate() {
   requestAnimationFrame(animate);
   render();
@@ -560,6 +568,7 @@ function animate() {
   checkPlayerBulletCollisions();
   changeCameraAngle();
   checkEnemyBulletCollisions();
+  HUD();
 }
 
 function render() {

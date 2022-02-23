@@ -7,17 +7,28 @@
   margin-top: 60px;
 } */
 
-*{
+*{ 
   margin:0;
   padding:0;
 }
 
-#HEALTH {
+.HUD {
   position: absolute;
-  display: inline-block;
+  color: #fff;
+  padding: 2px;
+  font-size: 10px;
   top: 0;
   left: 0;
-  width: 1000;
-  height: 1000;
-  font-size: xx-large;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.Health {
+  margin: 5px;
+}
+.Score {
+  margin: 5px;
+}
+.Time {
+  margin: 5px;
 }
