@@ -216,13 +216,7 @@ class Enemy {
       // this.front.normalize();
       this.enemy.position.add(diff);
       // this.enemy.rotation.y = (angle);
-      const enem = this.enemy.localToWorld(new THREE.Vector3(0.0, 0.0, 1.0));
-      enem.normalize();
-
-      diff.normalize();
-      const cosine = diff.dot(enem);
-      const arccosine = Math.acos(cosine);
-      this.enemy.rotation.y = arccosine;
+      this.enemy.lookAt(boat.boat.position)
 
       let toDel = new Array();
       for (let i = 0; i < this.lasers.length; i++) {
