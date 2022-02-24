@@ -55,7 +55,7 @@ class Boat {
     this.lasers = new Array();
     this.vels = new Array();
     this.times = new Array();
-    this.health = 10000;
+    this.health = 1000;
     this.score = 0;
     this.treasure=0;
   }
@@ -97,7 +97,7 @@ class Boat {
         bounds[3] = this.boat.position.x - BSIZE
         console.log(boat.boat.position)
         generateEnemies()
-        generateTrash()
+        generateCoin()
       }
 
       if (enemys.length == 0) {
@@ -126,7 +126,7 @@ class Boat {
 const boat = new Boat()
 
 //----------------------------------------------------------------------------------
-class Trash {
+class Coin {
   constructor(_scene) {
     scene.add(_scene)
     _scene.scale.set(10, 10, 10)
@@ -141,27 +141,27 @@ class Trash {
     //   _scene.position.set(random(-500, 500), -.5, random(-1000, 1000))
     // }
 
-    this.trash = _scene
+    this.coin = _scene
   }
 }
 
-let boatModel = null
-let trashes = []
-const TRASH_COUNT = 100
+let coinModel = null
+let coins = []
+const COIN_COUNT = 100
 
-function generateTrash(){
-  for(let i = 0; i < TRASH_COUNT; i++){
-    let trash = new Trash(boatModel.clone())
-    trashes.push(trash)
+function generateCoin(){
+  for(let i = 0; i < COIN_COUNT; i++){
+    let coin = new Coin(coinModel.clone())
+    coins.push(coin)
   }
 }
 
 
-async function createTrash() {
-  if (!boatModel) {
-    boatModel = await loadModel("models/coin/scene.gltf")
+async function createCoin() {
+  if (!coinModel) {
+    coinModel = await loadModel("models/coin/scene.gltf")
   }
-  return new Trash(boatModel.clone())
+  return new Coin(coinModel.clone())
 }
 
 // ----------------------------------------------------------------------------------
@@ -384,9 +384,9 @@ async function init() {
 
   const waterUniforms = water.material.uniforms;
 
-  for (let i = 0; i < TRASH_COUNT; i++) {
-    const trash = await createTrash()
-    trashes.push(trash)
+  for (let i = 0; i < COIN_COUNT; i++) {
+    const coin = await createCoin()
+    coins.push(coin)
   }
 
   //  generateEnemies()
@@ -437,20 +437,21 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function isTrashColliding(obj1, obj2) {
+function isCoinColliding(obj1, obj2) {
   return (
     Math.abs(obj1.position.x - obj2.position.x) < 15 &&
     Math.abs(obj1.position.z - obj2.position.z) < 10
   )
 }
 
-function checkTrashCollisions() {
+function checkCoinCollisions() {
   if (boat.boat) {
-    trashes.forEach(trash => {
-      if (trash.trash) {
+    coins.forEach(coin => {
+      if (coin.coin) {
 
-        if (isTrashColliding(boat.boat, trash.trash)) {
-          scene.remove(trash.trash)
+        if (isCoinColliding(boat.boat, coin.coin)) {
+          scene.remove(coin.coin)
+          coins.splice(coins.indexOf(coin), 1)
           boat.score+=1
           boat.treasure+=1
         }
@@ -539,7 +540,7 @@ function changeCameraAngle() {
     } else if (boat.view == "top") {
       camera.position.set(
         boat.boat.position.x,
-        boat.boat.position.y + 800,
+        boat.boat.position.y + 400,
         boat.boat.position.z);
     }
     camera.lookAt(boat.boat.position);
@@ -551,8 +552,11 @@ function HUD(){
   document.getElementById("treasure").innerHTML= Math.round(boat.treasure);
   document.getElementById("health").innerHTML= Math.round(boat.health);
   let currTime = new Date().getTime()
-  
-   document.getElementById("timeDone").innerHTML= Math.round((currTime-initialTime)/1000)
+  document.getElementById("timeDone").innerHTML= Math.round((currTime-initialTime)/1000)
+  if(boat.health <= 0){
+    alert("Game Over")
+    // window.location.reload()
+  }
 }
 
 function animate() {
@@ -563,7 +567,7 @@ function animate() {
     enemys[i].update()
     enemys[i].shoot()
   }
-  checkTrashCollisions();
+  checkCoinCollisions();
   checkEnemyCollisions();
   checkPlayerBulletCollisions();
   changeCameraAngle();
